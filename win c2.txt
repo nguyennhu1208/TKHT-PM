@@ -1,0 +1,133 @@
+PC1: 192.168.1.1 GW:192.168.1.2 DNS:192.168.1.1   khai.com
+PC2(ROUTER): 192.168.1.2 DNS:192.168.1.2          tt1141.com
+	     172.16.1.1  
+PC3: 172.16.1.100 GW:172.16.1.1   [làm win8 phải tắt IE ESC /USER]
+[câu 3:DNS:172.168.1.1 192.168.1.1]
+
+ĐÔNG BỘ THỜI GIAN TRƯỚC KHI LÀM
+
+Câu 1: VPN SSTP
+•	Cài Stand Alone Root CA, cài Routing and Remote Access
+•	Cấu hình VPN Server bằng giao thức SSTP
+•	Tạo user U1 trên để VPN Client kết nối vào VPN Server, cấu hình VPN Client.
+
+PC1:Nâng Domain: khai.com ->vào tài khoản khai\administrator ->đổi lại DNS đã bị thay đổi(ncpa.cpl)
++ Server manager 
+->Roles(=add roles) ->before you begin (next) ->Server Roles(chọn Active Directory certificate services) ->next ->Role services(chọn certification authority Web rnrollment->add required...) ->setup type( chọn standalone)->next ->CA Name(xóa đuôi để lại tên miền) ->next ->install ->close
+->Configure IE ESC (chọn off hết)
+ 
+PC2:Domain: tt1141.com ->vào tài khoản tt1141\administrator {->đổi lại DNS đã bị thay đổi(ncpa.cpl)
++ Server manager
+->Roles(=add roles) ->before you begin (next) ->Server Roles(Network policy anh access services) ->next ->role services (chọn Routing and remote....) ->install ->close
+->Configure IE ESC (chọn off hết)
++ Tạo User:start ->active... user and conputers ->tt1141.com(=new -> user: u1 tdc@123)
+->u1(=properties ->Dial-in ->chọn Allow access)
++ Start ->Routing and remote access 
+->ROUTER(=configure and enable...) ->chọn custom configuration -> chọn VPN Access/ Demand-dial.../ LAN routing ->finish ->start service
+->ROUTER(=properties) -> IPv4 ->static address pool ->add ->start 10.0.0.1 end 10.0.0.20 number 20 ->apply ->ok
++ windown R ->\\192.168.1.1 ->administrator tdc111!!!->coppy CertEnroll ra Desktop 
+-> khai(=install CRL) ->Next ->Place all...(Browse: Intermediate cer....)
+-> PC1.khai.com_khai(=install Cer...) ->open ->place all...(Browse: Trusted Root Cer...)
++ Internet ->Tool ->internet Options ->Security ->Trusted sites ->thanh kéo xuống hết ->sites ->bỏ tích ->add: http://192.168.1.1
++ Trình duyệt http://192.168.1.1/certsrv ->Request a certificate -> advanced cer... ->Create and sub... ->yes ->Name: VPNServer.tt1141.com ->Type of cer...(Server Authen...) 
+->tích Mask key as exportable ->Friendly name(VPNser) ->Submit
+
+PC1:Start ->Certification Authority ->Pending requerts ->quyền(=All Tasks ->Issue)
+
+PC2:Trình duyệt http://192.168.1.1/certsrv ->View the status... ->server... ->yes ->Install this cer... (hiện your new cer.. has been suc.. installed)
+
+PC3:+ Vào Ổ C:/ 
+->Organize ->Forlder and sea... ->View (tích bỏ Hide extensions for...)
+->windown/System32/drivers/etc/hosts->add: (ip card nào cũng được)172.16.1.1 VPNServer.tt1141.com ->save as .txt file ra desktop rồi xóa đuôi .txt -> xóa file hosts trong etc rồi cho file hosts ngoài desktop vào lại. 
++ vpn ->I'll set up an inte... ->Internet address(VPNServer.tt1141.com) ->user(u1)password(tdc@123)(tích cả hai ô) ->Crease
++ ncpa.cpl ->Connect ->properties ->security ->type of VPN(chọn PPTP) ->ok ->connect
++ windown R ->\\192.168.1.1 ->administrator: tài khoản PC1->coppy CertEnroll ra Desktop 
+-> khai(=install CRL) ->Next ->Place all...(Browse: Intermediate cer....)
+-> PC1.khai.com_khai(=install Cer...) ->open ->place all...(Browse: Trusted Root Cer...)
++ Internet ->Tool ->internet Options ->Security ->Trusted sites ->thanh kéo xuống hết ->sites ->bỏ tích ->add: http://192.168.1.1
++ Trình duyệt http://192.168.1.1/certsrv ->Request a certificate -> advanced cer... ->Create and sub... ->yes ->Name:u1  /E-mail:u1@tt1141.com  /TDC/IT/HC/NA/NA ->Type of cer...(Clinet Authen...) 
+->tích Mask key as exportable ->Friendly name(u1) ->Submit
+
+PC2:+ windown R ->mmc ->file ->Add/Remove Snap-in... ->Certificates ->My user account và Computer account(2 cái add lần lượt) ->ok
++ (1)Certifiacates-current user		(2)Certifiacates(Local computer)
+(1)Personal ->Certifiacates->VPNServer.tt1141.com(=all tasks ->export...) ->next->yes,.. ->pass:tdc ->next ->Browse ->desktop(đặt tên cert) ->save->next->finish->ok
+(2)Personal ->(=all tasks ->import...)->next ->browse ->desktop(chọn all file để hiện hết file) ->file cert ->open->next-> pass:tdc ->next->finish->ok
+{(1)Trusted root... ->Certificates ->copy khai
+(2)Trusted root... ->Certificates ->paste khai
+(1)Intermediate cer... ->Certificate Revoca... ->copy khai, khai, com
+(2)Intermediate cer... ->Certificate Revoca... ->paste khai, khai, com
+
+PC3:+windown R ->mmc ->file ->Add/Remove Snap-in... ->Certificates ->My user/computer account(2 cái add lần lượt) ->ok
++ (1)Certifiacates-current user		(2)Certifiacates(Local computer)
+(1)Trusted root... ->Certificates ->copy khai
+(2)Trusted root... ->Certificates ->paste khai
+(1)Intermediate cer... ->Certificate Revoca... ->copy khai, khai, com
+(2)Intermediate cer... ->Certificate Revoca... ->paste khai, khai, com
++ regedit ->Hkey_local_machine/system/currentcontrolset/services/SstpSvc/parameters(=new dword32bit(name: NoCertRevocationCheck)) ->modify 1 ->gpupdate /force
+
+PC2:Start ->Routing and remote access ->ROUTER(=all tasks ->Restart)
+
+PC3:ncpa.cpl ->Connect ->properties ->security ->type of VPN(chọn sstp) ->ok ->connect
+
+
+
+
+
+Câu 2: MAIL SERVER
+•	Cài đặt MDeamon, tạo 2 mailbox: U2@HOTENSV.COM  và U3@ HOTENSV.COM 
+•	Cài Enterprise CA
+•	Cài đặt và cấu hình Window Live Mail để U2 và U3 gửi mail qua lại có Sign và Encrypt
+
+{PC1:+Start ->DNS
+->forwa... ->khai.com(=new Alias..->name: mail ->browse: trỏ về mailserver(PC1) ->ok) 
+->reverse...(=new zone...->next ->netword ID:192.168.1 ->next ->tích allow both non... ->next->finish)(update và refresh)}
+
+PC2:+Cài đĩa MDaemon (mailserver) ->next ->domain name:tt1141.com ->next ->Fullname:adminmail   Maillbox:admin   Password:tdc@123 ->next ->Primary..:192.168.1.2(ip trỏ về mailserver) ->next->finish   
++ Tạo Group: start ->active... user and conputers ->tt11141.com(=new ->Group: mail)
++ Tạo User: start ->active... user and conputers ->tt1141.com(=new -> user: u2 tdc@123)
+->u2(=properties ->E-mai:u2@tt1141.com)và(=add to a group...:mail)
+->u3(tương tự u2)
++ start->Group policy ma..->domains/tt1141.com/domaincontroller/defaultdomain(tích vào->ok->edit) ->compu../policies/wdsetting/secusetting/localpoli/userrights->allowlogonlocal->add group mail->gpupdate /force
++ start ->MDaemon ->Start MDaemon ->ok
+->Ctrl+U ->bỏ tích Require strong paswords 
+->Ctrl+M ->New ->first..:u2 /email address:u2 /email pasword:1 ->ok (u3tương tự u2)
+
+PC2:+Cài đĩa WindowLiveMail ->accept->bỏ hết tích chọn mỗi mail ->install ->bỏ 2 tích set ->close
++ Server manager 
+->Roles(=add roles) ->before you begin (next) ->Server Roles(chọn Active Directory certificate services) ->next ->Role services(chọn certification authority Web rnrollment->add required...) ->setup type( chọn Enterprite)->next ->CA Name(xóa đuôi để lại tên miền) ->next ->install ->close
++ Switch User:
+->Vào u2->start ->WindowLiveMail -> E-mail:u2@tt1141.com /Pass:1 /Display:user2 /tích chọn Manually...->next ->Incoming../Outgoing..:mail.tt1141.com{192.168.1.2} ->tích chọn My outgoing...->next->finish 
++Vào internet từng con http://khai.com{192.168.1.2}/certsrv(chọn User)
+->Vào u3(tương tự u2)
+
+
+
+
+
+Câu 3: SITE
+•	Tạo Site Saigon và Hanoi
+•	Tạo Subnet Saigon và Hanoi
+•	Nâng cấp PC2 thành Additional DC của PC1. Kiểm tra bằng cách Disable card EXT của ROUTER  Logon vào U1
+
+PC1:+Start ->DNS
+->reverse...(=new zone...->next ->netword ID:192.168.1 ->next ->tích allow both non... ->next->finish)(update và refresh)
+
+PC1:+Start ->active...Sites and...
+->sites->(default-...-name đổi tên thành saigon
+->sites(=New site...)->ghi hanoi nhấn DEFAU....->OK
+->Sites->subnets(=new subnet..)->Prefit:192.168.1.0/24 ->saigon->ok
+->Sites->subnets(=new subnet..)->Prefit:172.16.1.0/24 ->hanoi->ok
+
+PC3:join domain PC1:khai.com
++ Windown R ->dcpromo->tích use..->next->tích Existing..->next->khai.com->set:administrator tdc111!!!(PC1)(nếu lỗi chỉnh lại dns: 192.168.1.1)->next->use...(chọn tên ->next)->tích root...
+
+
+
+
+
+
+
+
+
+
+
